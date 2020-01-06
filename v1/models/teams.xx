@@ -1,0 +1,64 @@
+import * as mongoose from "mongoose";
+
+const teams = [
+  {
+    teamId: 1,
+    teamName: "Team 1",
+    currentPos: { x: 1, y: 1 },
+    allPossitions: [{}]
+  }
+];
+
+const posts = [
+  { teamId: 1, positions: [{ x: 1, y: 1, found: false, taskId: "xxx" }] }
+];
+
+enum t {
+  "Point" = "Point"
+}
+interface IPoint extends mongoose.Document {
+  type: "Point";
+  coordinates: [Number];
+}
+interface IMultiPoint extends mongoose.Document {
+  type: "MultiPoint";
+  coordinates: [[Number]];
+}
+
+interface IPolygon extends mongoose.Document {
+  type: "Polygon",
+  coordinates : [[Number]]
+}
+
+interface ITeam {
+  teamId : Number;
+  teamName : String;
+  currentPos : IPoint
+  allPositions : [[Number]]
+}
+const PointSchema = new mongoose.Schema({
+  type: { type: String, enum: ["Point"] },
+  coordinates: { type: [Number] }
+});
+
+const Point = mongoose.model<IPoint>("Point", PointSchema);
+const P = mongoose.model("Point", PointSchema);
+
+
+
+const point: IPoint = new Point({ type: "sjfldsj", coordinates: true });
+console.log(point);
+
+point.sa
+
+const p2 = new P({ type: "sjfldsj", coordinates: true });
+console.log(p2);
+
+//API's
+
+// Get all teams (id, name, currentPos)
+// Get all posts all
+// Get allPostForTeam
+// Get statusForTeam {totalPosts: int, foundPost: 3}
+
+// Post newPosForTeam/:teamId   --> Store positon and return  status

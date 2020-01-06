@@ -1,0 +1,23 @@
+{
+  "name": "v1",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "tsc && node ./build/PostDAO.js",
+    "team": "tsc && node ./build/TeamDAO.js",
+    "prod": "tsc && node ./build/PostDAO.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.17.1",
+    "mongodb": "^3.4.1"
+  },
+  "devDependencies": {
+    "@types/mongodb": "^3.3.14",
+    "nodemon": "^2.0.2"
+  }
+}

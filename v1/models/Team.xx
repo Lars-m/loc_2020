@@ -1,0 +1,26 @@
+
+
+interface ITeam{
+  name: string,
+  startTime: Date,
+  reachedPosts: Array<{
+      postId:string,
+      timeSinceStart:number
+    }>;
+  postProblemsSolved : Array<{
+    postId:string,
+    timeSinceStart:number
+  }>;
+
+  "currentPosition": {
+    type: "Point",
+    coordinates:Array<number> 
+  },
+
+  route: {
+    type: "LineString",   
+    startTime: Date,
+    timeBetweenMeasurements : number,
+    coordinates: [ [number]]
+    ]
+}

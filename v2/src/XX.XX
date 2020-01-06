@@ -1,0 +1,40 @@
+
+interface IUpdateResult {
+  nextPostFound : string;
+  lastPostFound : boolean;
+  postsFound: Array<string>;
+  distanceToNextPost : number
+  nextPost: {longitude: number, lattitude: number}
+}
+
+interface ITeamInfo {
+  currentPosition: {longitude: number, lattitude: number};
+  nextPost: {longitude: number, lattitude: number};
+  postsFound: Array<string>;
+  postsSolved: Array<string>;
+  postOrder: Array<string>;
+}
+
+interface IPostInfo {
+  name: string;
+  task : {text: string, url : string}
+  taskSolution : string
+  reachedByTeams : Array<String>
+  solvedByTeams : Array<String>
+  position : {
+   type : "polygon",
+   coordinates: [ [number] ]
+  }
+}
+
+interface ITeamDAO {
+  updatePosition(teamId : string, longitude :number , lattitude: number): IUpdateResult;
+  updatePostsSolved(teamId : string, postId : string) : void;
+  infoAllTeams() : Array<ITeamInfo> 
+}
+
+interface IPostDAO {
+   addPost(name: string, task : {text:string, url:string}, taskSolution: string, polygon: [ [number] ]): void;
+   addSolutionForPost(teamId: string, postId: string, solution: string): boolean;
+   getPostsInfo() : IPostInfo;
+}

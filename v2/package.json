@@ -1,0 +1,31 @@
+{
+  "name": "v1",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha -r ts-node/register test/**/*.ts",
+    "dev": "tsc && node ./build/PostDAO.js",
+    "team": "tsc && node ./build/TeamDAO.js",
+    "prod": "tsc && node ./build/PostDAO.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^8.2.0",
+    "express": "^4.17.1",
+    "mongodb": "^3.4.1",
+    "typescript": "^3.7.4"
+  },
+  "devDependencies": {
+    "@types/node": "^13.1.4",
+    "@types/chai": "^4.2.7",
+    "@types/mocha": "^5.2.7",
+    "@types/mongodb": "^3.3.14",
+    "chai": "^4.2.0",
+    "mocha": "^7.0.0",
+    "nodemon": "^2.0.2",
+    "ts-node": "^8.5.4"
+  }
+}

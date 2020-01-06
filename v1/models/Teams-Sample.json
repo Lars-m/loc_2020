@@ -1,0 +1,34 @@
+[{
+  "name": "Team-1",
+  "ReachedPosts": [{
+      "postId":"Post-1",
+      "timeSinceStart":{"$numberInt" :1000}
+    }],
+  "PostProblemsSolved": [{
+                          "postId":"Post-1",
+                          "timeSinceStart":{"$numberInt" :1000}
+                          }],
+  "currentPosition": {
+    "type": "Point",
+    "coordinates": [
+      {"$numberDouble": "12.528362274169922"},
+      {"$numberDouble": "55.77069533469533" }
+    ]
+  },
+  "route": {
+    "type": "LineString",   
+    "startTime" :{"$date": {"$numberLong": "2335219200000"}},
+    "timeBetweenMeasurements" : {"$numberInt" :20},
+    "coordinates": [
+
+      
+      [
+        {"$numberDouble": "12.512000799179077"},
+        {"$numberDouble": "55.77017631795949"}
+      ],
+      [
+        {"$numberDouble": "12.511957883834839"},
+        {"$numberDouble": "55.770429792112445"}
+      ],
+    ]
+}]
