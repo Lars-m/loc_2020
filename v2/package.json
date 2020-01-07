@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "mocha -r ts-node/register test/**/*.ts",
+    "watch": "tsc -w",
     "dev": "tsc && node ./build/PostDAO.js",
     "team": "tsc && node ./build/TeamDAO.js",
     "prod": "tsc && node ./build/PostDAO.js"

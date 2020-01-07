@@ -37,6 +37,29 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.DISTANCE_TO_CENTER = 15;
+function getStatusForAllPosts(posts) {
+    return posts.reduce(function (acc, cur, idx, arr) {
+        acc.reached = cur.reached ? acc.reached + 1 : acc.reached;
+        acc.solved = cur.solved ? acc.solved + 1 : acc.solved;
+        if (cur.reached === false &&
+            cur.solved === false &&
+            acc.nextPostId === null) {
+            acc.nextPostId = cur.postId;
+        }
+        if (idx === arr.length - 2) {
+            var length_1 = arr.length;
+            acc.totalPosts = length_1;
+            acc.status =
+                acc.reached === length_1 &&
+                    acc.solved === length_1 &&
+                    acc.nextPostId === null
+                    ? "Game Over"
+                    : "Game Continues";
+        }
+        return acc;
+    }, { reached: 0, solved: 0, totalPosts: 0, nextPostId: null, status: "" });
+}
+exports.getStatusForAllPosts = getStatusForAllPosts;
 var DBFacade = /** @class */ (function () {
     function DBFacade(conn, dbName) {
         process.env.DB_DEV;
@@ -75,12 +98,127 @@ var DBFacade = /** @class */ (function () {
             });
         });
     };
-    DBFacade.prototype.addPost = function (name, task, taskSolution, lon, lat) {
+    /**
+     * Find next post with an unsolved problem.
+     * Rejects with "No, unsolved posts found" if all posts have been solved
+     * @param teamId Team-id for the team for which a post must be found
+     */
+    DBFacade.prototype.getNextUnsolvedPost = function (teamId) {
+        return __awaiter(this, void 0, void 0, function () {
+            var nextPost, post, status, foundPost, e_1;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, this.teams.findOne({ _id: teamId }, { projection: { posts: 1 } })];
+                    case 1:
+                        nextPost = _a.sent();
+                        post = nextPost.posts.find(function (post) {
+                            return post.solved === false;
+                        });
+                        if (post === undefined) {
+                            return [2 /*return*/, Promise.reject("No, unsolved posts found")];
+                        }
+                        status = post.reached !== false;
+                        _a.label = 2;
+                    case 2:
+                        _a.trys.push([2, 4, , 5]);
+                        return [4 /*yield*/, this.posts.findOne({ _id: post.postId })];
+                    case 3:
+                        foundPost = _a.sent();
+                        return [2 /*return*/, {
+                                postId: foundPost._id,
+                                status: status,
+                                longitude: foundPost.position.coordinates[0],
+                                latitude: foundPost.position.coordinates[1]
+                            }];
+                    case 4:
+                        e_1 = _a.sent();
+                        return [3 /*break*/, 5];
+                    case 5: return [2 /*return*/, Promise.reject("No, unsolved posts found")];
+                }
+            });
+        });
+    };
+    DBFacade.prototype.getNextPostGivenSolution = function (teamId, solution) {
+        return __awaiter(this, void 0, void 0, function () {
+            var res, foundPosts, foundPost, wasProblemSolved, teamUpdated, posts, status, nextPost;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, this.teams.findOne({ _id: teamId }, { projection: { posts: 1 } })];
+                    case 1:
+                        res = _a.sent();
+                        if (!res) {
+                            return [2 /*return*/, Promise.reject("No Team found with provided _id")];
+                        }
+                        foundPosts = res.posts.filter(function (r) { return r.reached === true && r.solved === false; });
+                        if (foundPosts.length > 1) {
+                            return [2 /*return*/, Promise.reject("Only one post with reached===true and solved===false should exist")];
+                        }
+                        if (foundPosts.length === 0) {
+                            return [2 /*return*/, Promise.reject("No post found which was reached by this team, with an unsolved problem")];
+                        }
+                        foundPost = foundPosts[0];
+                        return [4 /*yield*/, this.posts.findOne({
+                                _id: foundPost.postId,
+                                taskSolution: solution
+                            })];
+                    case 2:
+                        wasProblemSolved = _a.sent();
+                        if (!wasProblemSolved) {
+                            Promise.reject("Wrong solution provided for task at " + foundPosts.postId);
+                        }
+                        return [4 /*yield*/, this.teams.findOneAndUpdate({ _id: teamId, "posts.postId": foundPost.postId }, { $set: { "posts.$.solved": true } }, { returnOriginal: false })];
+                    case 3:
+                        teamUpdated = _a.sent();
+                        posts = teamUpdated.value.posts;
+                        status = getStatusForAllPosts(posts);
+                        return [4 /*yield*/, this.posts.findOne({ _id: status.nextPostId }, { projection: { position: 1 } })];
+                    case 4:
+                        nextPost = _a.sent();
+                        return [2 /*return*/, {
+                                postId: nextPost._id,
+                                longitude: nextPost.position.coordinates[0],
+                                lattitude: nextPost.position.coordinates[1],
+                                status: status
+                            }];
+                }
+            });
+        });
+    };
+    /**
+     * Add a new team to the database
+     * @param name Name of the team (will become the _id)
+     * @param taskTxt the task for this post, either in plain text or as a URL
+     * @param isURL if(true) taskText is plain text, otherwise it's a URL
+     * @param taskSolution Solution to the task
+     * @param lon Longitude (center) for this Post
+     * @param lat Lattitude (center) for this Post
+     */
+    DBFacade.prototype.addPost = function (name, taskTxt, isURL, taskSolution, lon, lat) {
         var position = { type: "Point", coordinates: [lon, lat] };
         return this.posts.insertOne({
             _id: name,
-            task: task,
+            task: { text: taskTxt, isURL: isURL },
             taskSolution: taskSolution,
+            position: position
+        });
+    };
+    /**
+     * Create a new Team
+     * Important, all POST's must be created before calling this method
+     * @param name Name of the team (will become the _id)
+     * @param postsInOrder Array with all Post-Id's for this game. The order in which post's are given,
+     *                     will be the order for the team to aproach the Posts
+     */
+    DBFacade.prototype.addTeam = function (name, postsInOrder) {
+        var position = { type: "Point", coordinates: [0, 0] };
+        var posts = postsInOrder.map(function (p) { return ({
+            postId: p,
+            reached: false,
+            solved: false
+        }); });
+        return this.teams.insertOne({
+            _id: name,
+            posts: posts,
             position: position
         });
     };

@@ -67,7 +67,7 @@ var TeamDAO = /** @class */ (function () {
             position: position
         });
     };
-    TeamDAO.prototype.getPost = function (teamId) {
+    TeamDAO.prototype.getNextUnfoundPost = function (teamId) {
         return __awaiter(this, void 0, void 0, function () {
             var nextPost, posts, post, retval, e_1;
             return __generator(this, function (_a) {

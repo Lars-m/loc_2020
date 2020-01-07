@@ -41,7 +41,7 @@ class TeamDAO {
     });
   }
 
-  async getPost(teamId: string) {
+  async getNextUnfoundPost(teamId: string) {
     const nextPost = await this.teams.findOne(
       { _id: teamId },
       { projection: { posts: 1 } }

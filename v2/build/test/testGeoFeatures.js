@@ -49,8 +49,9 @@ require('dotenv').config();
 var chai_1 = require("chai");
 var MongoClient = mongo.MongoClient;
 var facade;
-var client = new MongoClient(process.env.DB_URI || "", { useNewUrlParser: true });
+var client = new MongoClient(process.env.DB_URI || "", { useNewUrlParser: true, useUnifiedTopology: true });
 var posts;
+var teams;
 function makePostHelper(postName, taskText, isURL, taskSolution, lon, lat) {
     var task = { text: taskText, isURL: isURL };
     var position = { "type": "Point", coordinates: [lon, lat] };
@@ -79,6 +80,7 @@ describe("Testing the Geo-Features", function () {
                     case 1:
                         _a.sent();
                         posts = client.db(process.env.DB_TEST).collection("posts");
+                        teams = client.db(process.env.DB_TEST).collection("teams");
                         return [4 /*yield*/, posts.createIndex({ position: "2dsphere" })];
                     case 2:
                         _a.sent();
@@ -95,12 +97,14 @@ describe("Testing the Geo-Features", function () {
                     case 0: return [4 /*yield*/, posts.deleteMany({})];
                     case 1:
                         _a.sent();
-                        return [4 /*yield*/, posts.insertMany([
-                                makePostHelper("Post-1", "A task", false, "ax23", 12.518266439437866, 55.772780384609256),
-                                makePostHelper("Post-2", "A new task", false, "af63", 0, 0),
-                                makePostHelper("Post-3", "Third task", false, "ae53", 0, 0),
-                            ])];
+                        return [4 /*yield*/, teams.deleteMany({})];
                     case 2:
+                        _a.sent();
+                        return [4 /*yield*/, posts.insertMany([
+                                makePostHelper("P1", "A task", false, "ax23", 12.518266439437866, 55.772780384609256),
+                                makePostHelper("P2", "A new task", false, "af63", 0, 0),
+                            ])];
+                    case 3:
                         _a.sent();
                         return [2 /*return*/];
                 }
@@ -114,11 +118,11 @@ describe("Testing the Geo-Features", function () {
         var post;
         return __generator(this, function (_a) {
             switch (_a.label) {
-                case 0: return [4 /*yield*/, facade.getPostIfReached("Post-1", 12.518266439437866, latInside)];
+                case 0: return [4 /*yield*/, facade.getPostIfReached("P1", 12.518266439437866, latInside)];
                 case 1:
                     post = _a.sent();
                     chai_1.expect(post).not.to.equal(null);
-                    chai_1.expect(post._id).to.be.equal("Post-1");
+                    chai_1.expect(post._id).to.be.equal("P1");
                     return [2 /*return*/];
             }
         });
@@ -127,7 +131,7 @@ describe("Testing the Geo-Features", function () {
         var post;
         return __generator(this, function (_a) {
             switch (_a.label) {
-                case 0: return [4 /*yield*/, facade.getPostIfReached("Post-1", 12.518266439437866, latOutside)];
+                case 0: return [4 /*yield*/, facade.getPostIfReached("P1", 12.518266439437866, latOutside)];
                 case 1:
                     post = _a.sent();
                     chai_1.expect(post).to.equal(null);
@@ -135,17 +139,125 @@ describe("Testing the Geo-Features", function () {
             }
         });
     }); });
-    describe("Testing Add Data Features", function () {
+    describe("Verify behaviour of getNextUnsolvedPost", function () {
+        it("Should find P2 as the next post to go to. Status should be false (not found)", function () { return __awaiter(_this, void 0, void 0, function () {
+            var post;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, teams.insertOne({
+                            _id: "Team-1",
+                            posts: [{ postId: "P2", reached: false, solved: false }, { postId: "P1", reached: false, solved: false }],
+                            position: { type: "Point", coordinates: [0, 0] }
+                        })];
+                    case 1:
+                        _a.sent();
+                        return [4 /*yield*/, facade.getNextUnsolvedPost("Team-1")];
+                    case 2:
+                        post = _a.sent();
+                        chai_1.expect(post.postId).to.equal("P2");
+                        chai_1.expect(post.status).to.equal(false);
+                        return [2 /*return*/];
+                }
+            });
+        }); });
+        it("Should find P2 as the next post to go to. Status should be true (found)", function () { return __awaiter(_this, void 0, void 0, function () {
+            var post;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, teams.insertOne({
+                            _id: "Team-1",
+                            posts: [{ postId: "P2", reached: true, solved: false }, { postId: "P1", reached: false, solved: false }],
+                            position: { type: "Point", coordinates: [0, 0] }
+                        })];
+                    case 1:
+                        _a.sent();
+                        return [4 /*yield*/, facade.getNextUnsolvedPost("Team-1")];
+                    case 2:
+                        post = _a.sent();
+                        chai_1.expect(post).to.eql({ postId: "P2", status: true, longitude: 0, latitude: 0 });
+                        return [2 /*return*/];
+                }
+            });
+        }); });
+        it("Should find P1 as the next post to go to. Status should be false (not found)", function () { return __awaiter(_this, void 0, void 0, function () {
+            var post;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, teams.insertOne({
+                            _id: "Team-1",
+                            posts: [{ postId: "P2", reached: true, solved: true }, { postId: "P1", reached: false, solved: false }],
+                            position: { type: "Point", coordinates: [0, 0] }
+                        })];
+                    case 1:
+                        _a.sent();
+                        return [4 /*yield*/, facade.getNextUnsolvedPost("Team-1")];
+                    case 2:
+                        post = _a.sent();
+                        chai_1.expect(post.postId).to.equal("P1");
+                        chai_1.expect(post.status).to.equal(false);
+                        return [2 /*return*/];
+                }
+            });
+        }); });
+        it("Should NOT find any post, since all post-problems are solved", function () { return __awaiter(_this, void 0, void 0, function () {
+            var post, err_1;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, teams.insertOne({
+                            _id: "Team-1",
+                            posts: [{ postId: "P2", reached: true, solved: true }, { postId: "P1", reached: true, solved: true }],
+                            position: { type: "Point", coordinates: [0, 0] }
+                        })];
+                    case 1:
+                        _a.sent();
+                        _a.label = 2;
+                    case 2:
+                        _a.trys.push([2, 4, , 5]);
+                        return [4 /*yield*/, facade.getNextUnsolvedPost("Team-1")];
+                    case 3:
+                        post = _a.sent();
+                        return [3 /*break*/, 5];
+                    case 4:
+                        err_1 = _a.sent();
+                        chai_1.expect(err_1).to.be.equal("No, unsolved posts found");
+                        return [3 /*break*/, 5];
+                    case 5: return [2 /*return*/];
+                }
+            });
+        }); });
+    });
+    describe("Testing Add data features", function () {
         var _this = this;
         it("Add a new Post to the posts collection", function () { return __awaiter(_this, void 0, void 0, function () {
             var post;
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0: return [4 /*yield*/, facade.addPost("Px", { text: "aa", isURL: false }, "xx", 0, 0)];
+                    case 0: return [4 /*yield*/, facade.addPost("Px", "aa", false, "xx", 0, 0)];
                     case 1:
                         post = _a.sent();
                         chai_1.expect(post.insertedCount).to.equal(1);
                         chai_1.expect(post.insertedId).to.equal("Px");
+                        return [2 /*return*/];
+                }
+            });
+        }); });
+        it("Add a new Team to the teams collection", function () { return __awaiter(_this, void 0, void 0, function () {
+            var team, t;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, facade.addTeam("Team-1", ["P1", "P2"])];
+                    case 1:
+                        team = _a.sent();
+                        chai_1.expect(team.insertedCount).to.equal(1);
+                        chai_1.expect(team.insertedId).to.equal("Team-1");
+                        return [4 /*yield*/, teams.findOne({ _id: "Team-1" })];
+                    case 2:
+                        t = _a.sent();
+                        //https://github.com/chaijs/deep-eql
+                        chai_1.expect(t.posts[0]).to.eql({ postId: 'P1', reached: false, solved: false });
+                        chai_1.expect(t.posts[1]).to.eql({ postId: 'P2', reached: false, solved: false });
+                        chai_1.expect(t.position.type).to.be.equal("Point");
+                        chai_1.expect(t.position.coordinates).to.eql([0, 0]);
                         return [2 /*return*/];
                 }
             });
