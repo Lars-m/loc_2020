@@ -2,14 +2,16 @@
   "name": "v1",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
   "scripts": {
     "test": "mocha -r ts-node/register test/**/*.ts",
     "testPlayGame": "mocha -r ts-node/register test/playGame.ts",
+    "start": "node --inspect=5858 -r ts-node/register ./src/app.ts",
+    "start:watch": "nodemon",
     "watch": "tsc -w",
     "dev": "tsc && node ./build/PostDAO.js",
     "team": "tsc && node ./build/TeamDAO.js",
-    "prod": "tsc && node ./build/PostDAO.js"
+    "prod": "tsc && node ./build/PostDAO.js",
+    "build": "tsc"
   },
   "keywords": [],
   "author": "",
@@ -19,6 +21,7 @@
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
     "mongodb": "^3.4.1",
+    "swagger-ui-express": "^4.1.3",
     "typescript": "^3.7.4"
   },
   "devDependencies": {
